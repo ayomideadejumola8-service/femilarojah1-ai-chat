@@ -38,12 +38,20 @@ INSTRUCTIONS:
 7. Never claim an order has been placed or paid for unless confirmed.
 `;
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "https://ayomideadejumola8-service.github.io",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Vary": "Origin"
+};
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store"
+      "Cache-Control": "no-store",
+      ...CORS_HEADERS
     }
   });
 }
@@ -151,9 +159,15 @@ form.addEventListener("submit", async function(event) {
 }
 
 export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
+async fetch(request, env) {
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: CORS_HEADERS
+      });
+    }
 
+    const url = new URL(request.url);
     if (request.method === "GET" && url.pathname === "/") {
       return new Response(html(), {
         headers: {"Content-Type":"text/html; charset=utf-8"}
