@@ -202,6 +202,34 @@ async fetch(request, env) {
     }
 
     const url = new URL(request.url);
+      // WhatsApp webhook verification
+    if (url.pathname === "/webhook" && request.method === "GET") {
+      const mode = url.searchParams.get("hub.mode");
+      const token = url.searchParams.get("hub.verify_token");
+      const challenge = url.searchParams.get("hub.challenge");
+
+      if (
+        mode === "subscribe" &&
+        token === env.WHATSAPP_VERIFY_TOKEN &&
+        challenge
+      ) {
+        return new Response(challenge, { status: 200 });
+      }
+
+      return new Response("Verification failed", { status: 403 });
+    }
+
+    // Receive WhatsApp webhook events
+    if (url.pathname === "/webhook" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        console.log("WhatsApp webhook event:", JSON.stringify(body));
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      } catch (error) {
+        console.error("WhatsApp webhook error:", error);
+        return new Response("Invalid request", { status: 400 });
+      }
+        }
     if (request.method === "GET" && url.pathname === "/") {
       return new Response(html(), {
         headers: {"Content-Type":"text/html; charset=utf-8"}
