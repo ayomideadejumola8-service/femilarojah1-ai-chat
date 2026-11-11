@@ -2,10 +2,9 @@
 const BUSINESS_INFO = `
 You are the official customer assistant for FEMILAROJAH1, a business offering Logistics and Digital Services.
 
-BUSINESS CONTACT
-WhatsApp: 0907 803 4877
+WHATSAPP: 0907 803 4877
 
-LOGISTICS AND ERRAND SERVICES
+LOGISTICS AND ERRAND SERVICES:
 - Errand Assistance
 - Find It For Me
 - Shopping and Sourcing
@@ -13,7 +12,7 @@ LOGISTICS AND ERRAND SERVICES
 - Ordering Assistance
 - Custom Requests
 
-DIGITAL AND CREATIVE SERVICES
+DIGITAL AND CREATIVE SERVICES:
 - Website Design
 - Logo Design
 - Branding
@@ -22,70 +21,56 @@ DIGITAL AND CREATIVE SERVICES
 - WhatsApp Business Setup
 - Google Business Profile Setup
 
-APPROVED PACKAGES AND PRICES
+APPROVED PACKAGES:
 
-1. STARTER PACKAGE — ₦35,000
-Includes:
-- Custom business logo
-- One promotional flyer
-- WhatsApp Business setup
-- Digital catalogue setup
-- Professional business bio
+STARTER PACKAGE — ₦35,000
+Includes custom logo, one promotional flyer, WhatsApp Business setup, digital catalogue setup and professional business bio.
 
-2. PROFESSIONAL PACKAGE — ₦75,000
-Includes:
-- Custom logo
-- Basic brand identity
-- Three promotional designs
-- Digital catalogue
-- WhatsApp Business setup
-- Social-media branding
-- Professional business bio
+PROFESSIONAL PACKAGE — ₦75,000
+Includes custom logo, basic brand identity, three promotional designs, digital catalogue, WhatsApp Business setup, social-media branding and professional business bio.
 
-3. WEBSITE DESIGN — FROM ₦150,000
-Includes:
-- Responsive website
-- Home, About, Services, Gallery/Portfolio and Contact sections
-- WhatsApp integration
-- Basic SEO setup
-- Website deployment
+WEBSITE DESIGN — FROM ₦150,000
+Includes responsive website, Home, About, Services, Gallery/Portfolio and Contact sections, WhatsApp integration, basic SEO and deployment.
 
-STRICT BUSINESS RULES
-1. Only quote the approved prices and package contents written above.
-2. Never invent package features, prices, delivery limits, working hours, discounts, guarantees or extra services.
-3. Never add individual package prices together or calculate a different package total.
-4. The Starter Package and Professional Package do NOT include website design.
-5. Website design is a separate service starting from ₦150,000.
-6. No approved standalone price is available for logo design, flyers, branding or other individual digital services. Do not invent one.
-7. If asked for an unlisted price or custom package, explain that the price depends on the customer's requirements and direct them to WhatsApp.
-8. For logistics requests, ask for the customer's location and request details before discussing availability or a quotation. Never promise availability or delivery times without confirmation.
-9. Never claim an order has been placed, payment received or work completed unless confirmed.
-10. Do not invent business addresses, payment details, customer reviews or company policies.
-
-RESPONSE STYLE
-- Be friendly, professional, polite and concise.
-- Answer the customer's actual question directly.
-- Explain the difference between logistics services and digital services.
-- Do not overwhelm customers with long lists unless they request them.
-- If information is unavailable, be honest rather than guessing.
-- For enquiries, quotations and orders, direct customers to WhatsApp: 0907 803 4877.
-- If a question is unrelated to FEMILAROJAH1, politely explain that you assist with FEMILAROJAH1 enquiries.
+IMPORTANT RULES:
+1. Never invent prices, discounts, services or guarantees.
+2. Starter and Professional packages do not include website design.
+3. Website design is a separate service starting from ₦150,000.
+4. Individual prices for other services have not been approved. Refer customers to WhatsApp for quotations.
+5. For logistics enquiries, ask for the customer's location and request details.
+6. Never promise delivery times or availability without confirmation.
+7. Never claim an order or payment is confirmed unless verified.
+8. Do not invent addresses or payment details.
+9. Be friendly, professional and concise.
+10. For quotations and orders, direct customers to WhatsApp 0907 803 4877.
+11. You assist with FEMILAROJAH1 enquiries only.
 `;
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "https://ayomideadejumola8-service.github.io",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-  "Vary": "Origin"
-};
+const WORKER_ORIGIN = "https://femilarojah1-ai-chat.ayomideadejumola8.workers.dev";
 
-function json(data, status = 200) {
+const ALLOWED_ORIGINS = [
+  "https://ayomideadejumola8-service.github.io",
+  WORKER_ORIGIN
+];
+
+function corsHeaders(request) {
+  const origin = request.headers.get("Origin") || "";
+  return {
+    "Access-Control-Allow-Origin":
+      ALLOWED_ORIGINS.includes(origin) ? origin : WORKER_ORIGIN,
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Vary": "Origin"
+  };
+}
+
+function json(data, status = 200, request) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
-      ...CORS_HEADERS
+      ...corsHeaders(request)
     }
   });
 }
@@ -99,48 +84,73 @@ function html() {
 <title>FEMILAROJAH1 AI Assistant</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#101010;color:#fff;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:16px}
-.app{width:100%;max-width:600px;background:#1b1b1b;border:1px solid #b99748;border-radius:18px;overflow:hidden;box-shadow:0 10px 40px #0008}
+body{margin:0;background:#101010;color:white;font-family:Arial,sans-serif;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:14px}
+.app{width:100%;max-width:600px;background:#1b1b1b;border:1px solid #b99748;border-radius:18px;overflow:hidden}
 header{background:#111;padding:22px;text-align:center;border-bottom:1px solid #b99748}
-h1{color:#e4c16c;font-size:23px;margin:0 0 8px}
+h1{color:#e4c16c;margin:0 0 8px;font-size:24px}
 header p{margin:0;color:#ddd;font-size:14px}
-#chat{height:55vh;min-height:300px;max-height:520px;overflow-y:auto;padding:18px}
-.msg{padding:12px 14px;border-radius:12px;margin-bottom:12px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;font-size:15px}
+.menu{display:flex;flex-wrap:wrap;gap:8px;padding:14px}
+.menu button{background:#30291b;color:#e4c16c;border:1px solid #8e7134;padding:10px;border-radius:20px;font-size:12px}
+#chat{height:48vh;min-height:300px;max-height:500px;overflow-y:auto;padding:16px}
+.msg{padding:12px 14px;border-radius:12px;margin-bottom:12px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;font-size:14px}
 .bot{background:#2a2a2a;border:1px solid #444}
 .user{background:#66501f;margin-left:25px}
 form{display:flex;gap:8px;padding:14px;border-top:1px solid #444}
-input{min-width:0;flex:1;background:#292929;color:#fff;border:1px solid #555;border-radius:10px;padding:14px;font-size:16px}
-button{background:#d5b45c;color:#111;border:0;border-radius:10px;padding:0 18px;font-weight:bold;font-size:15px}
-button:disabled{opacity:.5}
+input{min-width:0;flex:1;background:#292929;color:white;border:1px solid #555;border-radius:10px;padding:14px;font-size:16px}
+#send{background:#d5b45c;color:#111;border:0;border-radius:10px;padding:0 18px;font-weight:bold}
+#send:disabled{opacity:.5}
 footer{text-align:center;color:#aaa;font-size:12px;padding:0 12px 16px}
-a{color:#e4c16c}
+footer a{color:#e4c16c}
 </style>
 </head>
 <body>
 <div class="app">
 <header>
 <h1>FEMILAROJAH1</h1>
-<p>Logistics & Digital Services · AI Customer Assistant</p>
+<p>Logistics • Errands • Digital Services</p>
+<p>AI Customer Assistant</p>
 </header>
-<div id="chat" aria-live="polite">
-<div class="msg bot">Welcome to FEMILAROJAH1! 👋
 
-I can help you learn about our logistics, errand, website design, branding, and other digital services.
-
-How can I help you today?</div>
+<div class="menu">
+<button type="button" data-message="Tell me about your Logistics and Errand services.">Logistics & Errands</button>
+<button type="button" data-message="Tell me about Website Design.">Website Design</button>
+<button type="button" data-message="Tell me about Branding and Graphics services.">Branding & Graphics</button>
+<button type="button" data-message="Tell me about your business setup services.">Business Setup</button>
+<button type="button" data-message="I would like to speak to FEMILAROJAH1.">Speak to FEMILAROJAH1</button>
 </div>
+
+<div id="chat" aria-live="polite">
+<div class="msg bot">Welcome to FEMILAROJAH1!
+
+I can assist with logistics, errands, website design, branding and other digital services.
+
+Choose a service above or type your enquiry below.</div>
+</div>
+
 <form id="form">
-<input id="message" placeholder="Type your message..." autocomplete="off" required>
+<input id="message" placeholder="Type your enquiry..." autocomplete="off" required>
 <button id="send" type="submit">Send</button>
 </form>
-<footer>Need direct assistance? WhatsApp: 0907 803 4877</footer>
+
+<footer>
+Direct assistance:
+<a href="https://wa.me/2349078034877">WhatsApp 0907 803 4877</a>
+</footer>
 </div>
+
 <script>
+const API = "${WORKER_ORIGIN}/api/chat";
 const chat = document.getElementById("chat");
 const form = document.getElementById("form");
 const input = document.getElementById("message");
 const send = document.getElementById("send");
-const history = [];
+
+let sessionId = localStorage.getItem("femilarojah1_session");
+
+if (!sessionId) {
+  sessionId = crypto.randomUUID();
+  localStorage.setItem("femilarojah1_session", sessionId);
+}
 
 function addMessage(text, who) {
   const div = document.createElement("div");
@@ -150,42 +160,54 @@ function addMessage(text, who) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-form.addEventListener("submit", async function(event) {
-  event.preventDefault();
-  const message = input.value.trim();
-  if (!message) return;
+async function sendMessage(message) {
+  if (!message.trim()) return;
 
   addMessage(message, "user");
-  history.push({role:"user", content:message});
   input.value = "";
   send.disabled = true;
   send.textContent = "...";
 
   try {
-    const response = await fetch("/api/chat", {
+    const response = await fetch(API, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({messages:history})
+      body: JSON.stringify({
+        sessionId,
+        message
+      })
     });
 
     const data = await response.json();
 
     if (!response.ok || !data.reply) {
-      throw new Error(data.error || "The assistant is temporarily unavailable.");
+      throw new Error(data.error || "Assistant unavailable.");
     }
 
     addMessage(data.reply, "bot");
-    history.push({role:"assistant", content:data.reply});
 
-    if (history.length > 12) history.splice(0, 2);
   } catch (error) {
-    addMessage("Sorry, I couldn't respond just now. Please contact us on WhatsApp: 0907 803 4877.", "bot");
-    console.error(error);
+    console.error("Chat error:", error);
+    addMessage(
+      "Sorry, our assistant is temporarily unavailable. Please contact us on WhatsApp: 0907 803 4877.",
+      "bot"
+    );
   } finally {
     send.disabled = false;
     send.textContent = "Send";
     input.focus();
   }
+}
+
+form.addEventListener("submit", function(event) {
+  event.preventDefault();
+  sendMessage(input.value.trim());
+});
+
+document.querySelectorAll("[data-message]").forEach(button => {
+  button.addEventListener("click", () => {
+    sendMessage(button.dataset.message);
+  });
 });
 </script>
 </body>
@@ -193,16 +215,17 @@ form.addEventListener("submit", async function(event) {
 }
 
 export default {
-async fetch(request, env) {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
-        headers: CORS_HEADERS
+        headers: corsHeaders(request)
       });
     }
 
-    const url = new URL(request.url);
-      // WhatsApp webhook verification
+    // WhatsApp webhook verification
     if (url.pathname === "/webhook" && request.method === "GET") {
       const mode = url.searchParams.get("hub.mode");
       const token = url.searchParams.get("hub.verify_token");
@@ -210,13 +233,14 @@ async fetch(request, env) {
 
       if (
         mode === "subscribe" &&
+        token &&
         token === env.WHATSAPP_VERIFY_TOKEN &&
         challenge
       ) {
-        return new Response(challenge, { status: 200 });
+        return new Response(challenge, {status: 200});
       }
 
-      return new Response("Verification failed", { status: 403 });
+      return new Response("Verification failed", {status: 403});
     }
 
     // Receive WhatsApp webhook events
@@ -224,15 +248,19 @@ async fetch(request, env) {
       try {
         const body = await request.json();
         console.log("WhatsApp webhook event:", JSON.stringify(body));
-        return new Response("EVENT_RECEIVED", { status: 200 });
+        return new Response("EVENT_RECEIVED", {status: 200});
       } catch (error) {
         console.error("WhatsApp webhook error:", error);
-        return new Response("Invalid request", { status: 400 });
+        return new Response("Invalid request", {status: 400});
       }
-        }
+    }
+
     if (request.method === "GET" && url.pathname === "/") {
       return new Response(html(), {
-        headers: {"Content-Type":"text/html; charset=utf-8"}
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          ...corsHeaders(request)
+        }
       });
     }
 
@@ -240,28 +268,54 @@ async fetch(request, env) {
       return new Response(null, {status:204});
     }
 
+    // AI customer chat with D1 conversation storage
     if (request.method === "POST" && url.pathname === "/api/chat") {
       if (!env.AI) {
-        console.error("Workers AI binding is missing.");
-        return json({error:"AI binding is missing."}, 503);
+        return json({error:"AI binding is missing."}, 503, request);
+      }
+
+      if (!env.DB) {
+        return json({error:"Database binding is missing."}, 503, request);
       }
 
       try {
         const body = await request.json();
-        const messages = Array.isArray(body.messages) ? body.messages : [];
+        const sessionId = body.sessionId;
+        const message = body.message;
 
-        const conversation = messages
-          .filter(m =>
-            m &&
-            ["user", "assistant"].includes(m.role) &&
-            typeof m.content === "string"
-          )
-          .slice(-12)
-          .map(m => ({role:m.role, content:m.content.slice(0, 2000)}));
-
-        if (!conversation.length) {
-          return json({error:"Please enter a message."}, 400);
+        if (
+          typeof sessionId !== "string" ||
+          !/^[a-zA-Z0-9-]{10,80}$/.test(sessionId)
+        ) {
+          return json({error:"Invalid conversation session."}, 400, request);
         }
+
+        if (
+          typeof message !== "string" ||
+          !message.trim() ||
+          message.length > 2000
+        ) {
+          return json({error:"Please enter a message under 2,000 characters."}, 400, request);
+        }
+
+        await env.DB.prepare(
+          "INSERT INTO conversations (session_id) VALUES (?) ON CONFLICT(session_id) DO UPDATE SET updated_at = datetime('now')"
+        ).bind(sessionId).run();
+
+        await env.DB.prepare(
+          "INSERT INTO messages (session_id, role, content) VALUES (?, 'user', ?)"
+        ).bind(sessionId, message.trim()).run();
+
+        const saved = await env.DB.prepare(
+          "SELECT role, content FROM messages WHERE session_id = ? ORDER BY id DESC LIMIT 12"
+        ).bind(sessionId).all();
+
+        const conversation = (saved.results || [])
+          .reverse()
+          .map(item => ({
+            role: item.role,
+            content: item.content
+          }));
 
         const result = await env.AI.run(
           "@cf/meta/llama-3.1-8b-instruct-fp8",
@@ -270,26 +324,35 @@ async fetch(request, env) {
               {role:"system", content:BUSINESS_INFO},
               ...conversation
             ],
-            max_tokens: 400
+            max_tokens:400
           }
         );
 
         const reply = result && result.response;
 
         if (typeof reply !== "string" || !reply.trim()) {
-          console.error("Unexpected Workers AI response:", JSON.stringify(result));
-          return json({error:"The AI returned an empty response."}, 502);
+          console.error("Unexpected AI response:", JSON.stringify(result));
+          return json({error:"The AI returned an empty response."}, 502, request);
         }
 
-        return json({reply:reply.trim()});
+        await env.DB.prepare(
+          "INSERT INTO messages (session_id, role, content) VALUES (?, 'assistant', ?)"
+        ).bind(sessionId, reply.trim()).run();
+
+        await env.DB.prepare(
+          "UPDATE conversations SET updated_at = datetime('now') WHERE session_id = ?"
+        ).bind(sessionId).run();
+
+        return json({reply:reply.trim()}, 200, request);
+
       } catch (error) {
-        console.error("FEMILAROJAH1 AI failure:", error);
+        console.error("FEMILAROJAH1 AI or database error:", error);
         return json({
-          error: String(error?.message || error || "Unknown AI error")
-        }, 500);
+          error:"The assistant could not complete your request. Please try again."
+        }, 500, request);
       }
     }
 
-    return json({error:"Not found."}, 404);
+    return json({error:"Not found."}, 404, request);
   }
 };
