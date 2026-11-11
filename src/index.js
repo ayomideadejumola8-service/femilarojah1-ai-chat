@@ -1,3 +1,4 @@
+
 const BUSINESS_INFO = `
 You are the official AI customer-service assistant for FEMILAROJAH1.
 Business: FEMILAROJAH1 — Logistics, Errands and Digital Services.
@@ -38,7 +39,7 @@ Responsive website, Home, About, Services, Gallery or Portfolio,
 Contact, WhatsApp integration, basic SEO and deployment.
 
 IMPORTANT
-- Website design is separate from the Starter and Professional packages.
+- Website design is separate from Starter and Professional packages.
 - Do not invent prices for individual services.
 - Ask customers for details needed to prepare a quotation.
 - Be polite, clear, professional and concise.
@@ -78,7 +79,7 @@ header{text-align:center;padding:20px;background:#1b1b1b;border:1px solid #b8944
 h1{color:#d9b45c;margin:0 0 8px}
 header p{color:#ddd;font-size:13px}
 #chat{height:390px;overflow-y:auto;background:#191919;padding:15px;border-radius:12px;margin-top:15px}
-.message{padding:11px 13px;margin:10px 0;border-radius:12px;max-width:88%;line-height:1.5;white-space:pre-wrap}
+.message{padding:11px 13px;margin:10px 0;border-radius:12px;max-width:88%;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
 .bot{background:#292929;border:1px solid #9b7936}
 .user{background:#8b6b2c;margin-left:auto}
 .menu{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
@@ -86,7 +87,6 @@ header p{color:#ddd;font-size:13px}
 form{display:flex;gap:8px;margin-top:12px}
 input{flex:1;min-width:0;padding:13px;border-radius:8px;border:1px solid #b89445;background:#222;color:white}
 form button{padding:12px 17px;background:#b89445;color:#111;border:0;border-radius:8px;font-weight:bold}
-a{color:#e6c46e}
 .small{text-align:center;color:#aaa;font-size:12px;margin-top:15px}
 </style>
 </head>
@@ -98,9 +98,7 @@ a{color:#e6c46e}
 <p>LOGISTICS • ERRANDS • DIGITAL SERVICES</p>
 </header>
 
-<div id="chat">
-<div class="message bot">Welcome to FEMILAROJAH1! How can we assist you today?</div>
-</div>
+<div id="chat"></div>
 
 <div class="menu">
 <button type="button" data-message="I need Logistics and Errands assistance.">Logistics & Errands</button>
@@ -123,6 +121,7 @@ const chat = document.getElementById("chat");
 const form = document.getElementById("form");
 const input = document.getElementById("message");
 const sessionKey = "femilarojah1_chat_session";
+
 let sessionId = localStorage.getItem(sessionKey);
 
 if (!sessionId) {
@@ -136,6 +135,42 @@ function addMessage(text, type) {
   item.textContent = text;
   chat.appendChild(item);
   chat.scrollTop = chat.scrollHeight;
+}
+
+async function loadHistory() {
+  try {
+    const response = await fetch(
+      "/api/history?sessionId=" + encodeURIComponent(sessionId)
+    );
+
+    if (!response.ok) {
+      throw new Error("History request failed");
+    }
+
+    const data = await response.json();
+
+    chat.innerHTML = "";
+
+    if (Array.isArray(data.messages) && data.messages.length > 0) {
+      data.messages.forEach(item => {
+        addMessage(
+          item.content,
+          item.role === "user" ? "user" : "bot"
+        );
+      });
+    } else {
+      addMessage(
+        "Welcome to FEMILAROJAH1! How can we assist you today?",
+        "bot"
+      );
+    }
+  } catch (error) {
+    console.error("History loading error:", error);
+    addMessage(
+      "Welcome to FEMILAROJAH1! How can we assist you today?",
+      "bot"
+    );
+  }
 }
 
 async function sendMessage(message) {
@@ -161,14 +196,23 @@ async function sendMessage(message) {
     waiting.remove();
 
     if (!response.ok) {
-      addMessage(data.error || "Sorry, we could not process that message. Please try again.", "bot");
+      addMessage(
+        data.error || "Sorry, we could not process that message. Please try again.",
+        "bot"
+      );
       return;
     }
 
-    addMessage(data.reply || "Please contact our team for assistance.", "bot");
+    addMessage(
+      data.reply || "Please contact our team for assistance.",
+      "bot"
+    );
   } catch (error) {
     waiting.remove();
-    addMessage("Connection problem. Please try again or contact us on WhatsApp: https://wa.me/2349078034877", "bot");
+    addMessage(
+      "Connection problem. Please try again or contact us on WhatsApp: https://wa.me/2349078034877",
+      "bot"
+    );
   }
 }
 
@@ -178,8 +222,12 @@ form.addEventListener("submit", event => {
 });
 
 document.querySelectorAll("[data-message]").forEach(button => {
-  button.addEventListener("click", () => sendMessage(button.dataset.message));
+  button.addEventListener("click", () => {
+    sendMessage(button.dataset.message);
+  });
 });
+
+loadHistory();
 </script>
 </body>
 </html>`;
@@ -226,14 +274,55 @@ export default {
       return json({ received: true });
     }
 
+    // RESTORE SAVED CHAT HISTORY
+    if (url.pathname === "/api/history" && request.method === "GET") {
+      try {
+        if (!env.DB) {
+          return json({
+            error: "Chat database is not configured."
+          }, 503);
+        }
+
+        const sessionId = String(
+          url.searchParams.get("sessionId") || ""
+        ).trim();
+
+        if (!sessionId || sessionId.length > 100) {
+          return json({
+            error: "A valid session ID is required."
+          }, 400);
+        }
+
+        const result = await env.DB.prepare(
+          "SELECT role, content, created_at FROM messages WHERE session_id = ? ORDER BY id ASC LIMIT 100"
+        ).bind(sessionId).all();
+
+        return json({
+          messages: result.results || []
+        });
+
+      } catch (error) {
+        console.error("History error:", error);
+
+        return json({
+          error: "Could not load chat history."
+        }, 500);
+      }
+    }
+
+    // AI CUSTOMER CHAT
     if (url.pathname === "/api/chat" && request.method === "POST") {
       try {
         if (!env.AI) {
-          return json({ error: "AI service is not configured." }, 503);
+          return json({
+            error: "AI service is not configured."
+          }, 503);
         }
 
         if (!env.DB) {
-          return json({ error: "Chat database is not configured." }, 503);
+          return json({
+            error: "Chat database is not configured."
+          }, 503);
         }
 
         const body = await request.json();
@@ -241,11 +330,15 @@ export default {
         const message = String(body.message || "").trim();
 
         if (!sessionId || !message) {
-          return json({ error: "Please provide a message and session ID." }, 400);
+          return json({
+            error: "Please provide a message and session ID."
+          }, 400);
         }
 
         if (sessionId.length > 100 || message.length > 3000) {
-          return json({ error: "Your message is too long." }, 400);
+          return json({
+            error: "Your message is too long."
+          }, 400);
         }
 
         await env.DB.prepare(
@@ -295,9 +388,13 @@ export default {
         ).bind(sessionId).run();
 
         return json({ reply });
+
       } catch (error) {
         console.error("Chat error:", error);
-        return json({ error: "The assistant could not respond. Please try again shortly." }, 500);
+
+        return json({
+          error: "The assistant could not respond. Please try again shortly."
+        }, 500);
       }
     }
 
