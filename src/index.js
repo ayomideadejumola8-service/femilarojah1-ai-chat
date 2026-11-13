@@ -689,7 +689,15 @@ return json({
   notificationPending: !emailSent,
   message: "Your enquiry has been submitted for FEMILAROJAH1 team review."
 });
-     
+
+      } catch (error) {
+        console.error("Enquiry submission error:", error);
+        return json({
+          error: "Could not submit your enquiry. Please try again."
+        }, 500);
+      }
+    }
+
     return json({ error: "Not found" }, 404);
   }
 };
