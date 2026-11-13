@@ -460,6 +460,156 @@ export default {
       }
     }
 
+    // Review an enquiry before submission
+    if (url.pathname === "/api/review-enquiry" && request.method === "POST") {
+      try {
+        if (!env.DB || !env.AI) {
+          return json({ error: "Required services are not configured." }, 503);
+        }
+
+        const body = await request.json();
+        const sessionId = String(body.sessionId || "").trim();
+
+        if (!sessionId || sessionId.length > 100) {
+          return json({ error: "A valid session ID is required." }, 400);
+        }
+
+        const result = await env.DB.prepare(
+          "SELECT role, content FROM messages WHERE session_id = ? ORDER BY id ASC"
+        ).bind(sessionId).all();
+
+        const messages = result.results || [];
+        const customerMessages = messages.filter(m => m.role === "user");
+
+        if (customerMessages.length < 2) {
+          return json({
+            error: "Please provide a little more information before reviewing your enquiry."
+          }, 400);
+        }
+
+        const transcript = messages.map(m =>
+          `${m.role === "user" ? "Customer" : "Assistant"}: ${m.content}`
+        ).join("\n");
+
+        const aiResult = await env.AI.run(
+          "@cf/meta/llama-3.1-8b-instruct-fp8",
+          {
+            messages: [
+              {
+                role: "system",
+                content: "Prepare a concise professional customer enquiry summary for FEMILAROJAH1. Include requested service, customer requirements, relevant details and any missing information. Do not invent prices, timelines or promises. State that quotation and arrangements require owner confirmation."
+              },
+              {
+                role: "user",
+                content: transcript
+              }
+            ],
+            max_tokens: 700
+          }
+        );
+
+        const summary =
+          aiResult.response ||
+          aiResult.result?.response ||
+          "The enquiry is awaiting review.";
+
+        return json({ summary });
+      } catch (error) {
+        console.error("Enquiry review error:", error);
+        return json({ error: "Could not prepare the enquiry review." }, 500);
+      }
+    }
+
+    // Save an enquiry only after customer confirmation
+    if (url.pathname === "/api/submit-enquiry" && request.method === "POST") {
+      try {
+        if (!env.DB || !env.AI) {
+          return json({ error: "Required services are not configured." }, 503);
+        }
+
+        const body = await request.json();
+        const sessionId = String(body.sessionId || "").trim();
+
+        if (!sessionId || sessionId.length > 100 || body.confirmed !== true) {
+          return json({ error: "Please confirm your enquiry before submitting." }, 400);
+        }
+
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS completed_enquiries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL UNIQUE,
+            summary TEXT NOT NULL,
+            transcript TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'new',
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+          )
+        `).run();
+
+        const existing = await env.DB.prepare(
+          "SELECT id, status FROM completed_enquiries WHERE session_id = ?"
+        ).bind(sessionId).first();
+
+        if (existing) {
+          return json({
+            success: true,
+            alreadySubmitted: true,
+            message: "Your enquiry has already been submitted."
+          });
+        }
+
+        const result = await env.DB.prepare(
+          "SELECT role, content FROM messages WHERE session_id = ? ORDER BY id ASC"
+        ).bind(sessionId).all();
+
+        const messages = result.results || [];
+        const customerMessages = messages.filter(m => m.role === "user");
+
+        if (customerMessages.length < 2) {
+          return json({ error: "Please provide more enquiry details first." }, 400);
+        }
+
+        const transcript = messages.map(m =>
+          `${m.role === "user" ? "Customer" : "Assistant"}: ${m.content}`
+        ).join("\n");
+
+        const aiResult = await env.AI.run(
+          "@cf/meta/llama-3.1-8b-instruct-fp8",
+          {
+            messages: [
+              {
+                role: "system",
+                content: "Prepare a concise professional customer enquiry summary for FEMILAROJAH1. Include requested service, customer requirements, relevant details and missing information. Do not invent prices, timelines or promises. State that quotation and arrangements require owner confirmation."
+              },
+              {
+                role: "user",
+                content: transcript
+              }
+            ],
+            max_tokens: 700
+          }
+        );
+
+        const summary =
+          aiResult.response ||
+          aiResult.result?.response ||
+          "The enquiry is awaiting owner review.";
+
+        await env.DB.prepare(`
+          INSERT OR IGNORE INTO completed_enquiries
+          (session_id, summary, transcript, status)
+          VALUES (?, ?, ?, 'new')
+        `).bind(sessionId, summary, transcript).run();
+
+        return json({
+          success: true,
+          message: "Your enquiry has been submitted for FEMILAROJAH1 team review."
+        });
+      } catch (error) {
+        console.error("Enquiry submission error:", error);
+        return json({ error: "Could not submit your enquiry. Please try again." }, 500);
+      }
+      }
+     
     return json({ error: "Not found" }, 404);
   }
 };
