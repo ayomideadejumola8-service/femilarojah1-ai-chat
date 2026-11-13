@@ -604,15 +604,16 @@ if (whatsappNumber.length < 10 || whatsappNumber.length > 15) {
   return json({ error: "Please provide a valid WhatsApp number." }, 400);
 }
         await env.DB.prepare(`
-          CREATE TABLE IF NOT EXISTS completed_enquiries (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id TEXT NOT NULL UNIQUE,
-            summary TEXT NOT NULL,
-            transcript TEXT NOT NULL,
-            status TEXT NOT NULL DEFAULT 'new',
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-          )
-        `).run();
+  CREATE TABLE IF NOT EXISTS completed_enquiries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL UNIQUE,
+    summary TEXT NOT NULL,
+    transcript TEXT NOT NULL,
+    whatsapp_number TEXT,
+    status TEXT NOT NULL DEFAULT 'new',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )
+`).run();
 
         const existing = await env.DB.prepare(
           "SELECT id, status FROM completed_enquiries WHERE session_id = ?"
