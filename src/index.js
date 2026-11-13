@@ -1,4 +1,65 @@
+function escapeEmailHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
 
+async function sendEnquiryEmail(env, enquiry) {
+  try {
+    const whatsappLink = `https://wa.me/${enquiry.whatsappNumber}`;
+    const summary = escapeEmailHtml(enquiry.summary);
+    const transcript = escapeEmailHtml(enquiry.transcript)
+      .replace(/\n/g, "<br>");
+
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": env.BREVO_API_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        sender: {
+          name: "FEMILAROJAH1",
+          email: "femilarojah1@gmail.com"
+        },
+        to: [{ email: "femilarojah1@gmail.com" }],
+        subject: `New FEMILAROJAH1 Enquiry #${enquiry.id}`,
+        textContent:
+          `New customer enquiry #${enquiry.id}\n\n` +
+          `Summary:\n${enquiry.summary}\n\n` +
+          `Customer WhatsApp: ${whatsappLink}\n\n` +
+          `Conversation:\n${enquiry.transcript}`,
+        htmlContent: `
+          <h2>New FEMILAROJAH1 Customer Enquiry</h2>
+          <p><strong>Enquiry ID:</strong> ${enquiry.id}</p>
+          <h3>Enquiry Summary</h3>
+          <p>${summary}</p>
+          <p>
+            <a href="${whatsappLink}">
+              Reply to Customer on WhatsApp
+            </a>
+          </p>
+          <h3>Full Conversation</h3>
+          <p>${transcript}</p>
+        `
+      })
+    });
+
+    if (!response.ok) {
+      console.error("Brevo email error:", await response.text());
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Email notification error:", error);
+    return false;
+  }
+       }
 const BUSINESS_INFO = `
 You are the official AI customer-service assistant for FEMILAROJAH1.
 
@@ -607,15 +668,27 @@ if (whatsappNumber.length < 10 || whatsappNumber.length > 15) {
   (session_id, summary, transcript, status, whatsapp_number)
   VALUES (?, ?, ?, 'new', ?)
 `).bind(sessionId, summary, transcript, whatsappNumber).run();
-        return json({
-          success: true,
-          message: "Your enquiry has been submitted for FEMILAROJAH1 team review."
-        });
-      } catch (error) {
-        console.error("Enquiry submission error:", error);
-        return json({ error: "Could not submit your enquiry. Please try again." }, 500);
-      }
-      }
+
+const savedEnquiry = await env.DB.prepare(
+  "SELECT id FROM completed_enquiries WHERE session_id = ?"
+).bind(sessionId).first();
+
+if (!savedEnquiry) {
+  return json({ error: "Enquiry saved, but its record could not be retrieved." }, 500);
+}
+
+const emailSent = await sendEnquiryEmail(env, {
+  id: savedEnquiry.id,
+  summary,
+  transcript,
+  whatsappNumber
+});
+
+return json({
+  success: true,
+  notificationPending: !emailSent,
+  message: "Your enquiry has been submitted for FEMILAROJAH1 team review."
+});
      
     return json({ error: "Not found" }, 404);
   }
