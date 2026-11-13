@@ -603,11 +603,10 @@ if (whatsappNumber.length < 10 || whatsappNumber.length > 15) {
           "The enquiry is awaiting owner review.";
 
         await env.DB.prepare(`
-          INSERT OR IGNORE INTO completed_enquiries
-          (session_id, summary, transcript, status)
-          VALUES (?, ?, ?, 'new')
-        `).bind(sessionId, summary, transcript).run();
-
+  INSERT OR IGNORE INTO completed_enquiries
+  (session_id, summary, transcript, status, whatsapp_number)
+  VALUES (?, ?, ?, 'new', ?)
+`).bind(sessionId, summary, transcript, whatsappNumber).run();
         return json({
           success: true,
           message: "Your enquiry has been submitted for FEMILAROJAH1 team review."
