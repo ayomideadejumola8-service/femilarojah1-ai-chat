@@ -528,12 +528,20 @@ export default {
         }
 
         const body = await request.json();
-        const sessionId = String(body.sessionId || "").trim();
+const sessionId = String(body.sessionId || "").trim();
+let whatsappNumber = String(body.whatsappNumber || "").replace(/\D/g, "");
 
-        if (!sessionId || sessionId.length > 100 || body.confirmed !== true) {
-          return json({ error: "Please confirm your enquiry before submitting." }, 400);
-        }
+if (whatsappNumber.startsWith("0")) {
+  whatsappNumber = "234" + whatsappNumber.slice(1);
+}
 
+if (!sessionId || sessionId.length > 100 || body.confirmed !== true) {
+  return json({ error: "Please confirm your enquiry before submitting." }, 400);
+}
+
+if (whatsappNumber.length < 10 || whatsappNumber.length > 15) {
+  return json({ error: "Please provide a valid WhatsApp number." }, 400);
+}
         await env.DB.prepare(`
           CREATE TABLE IF NOT EXISTS completed_enquiries (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
