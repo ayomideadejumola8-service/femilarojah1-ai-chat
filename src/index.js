@@ -1,65 +1,4 @@
-function escapeEmailHtml(value) {
-  return String(value || "").replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
-}
 
-async function sendEnquiryEmail(env, enquiry) {
-  try {
-    const whatsappLink = `https://wa.me/${enquiry.whatsappNumber}`;
-    const summary = escapeEmailHtml(enquiry.summary);
-    const transcript = escapeEmailHtml(enquiry.transcript)
-      .replace(/\n/g, "<br>");
-
-    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: {
-        "api-key": env.BREVO_API_KEY,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        sender: {
-          name: "FEMILAROJAH1",
-          email: "femilarojah1@gmail.com"
-        },
-        to: [{ email: "femilarojah1@gmail.com" }],
-        subject: `New FEMILAROJAH1 Enquiry #${enquiry.id}`,
-        textContent:
-          `New customer enquiry #${enquiry.id}\n\n` +
-          `Summary:\n${enquiry.summary}\n\n` +
-          `Customer WhatsApp: ${whatsappLink}\n\n` +
-          `Conversation:\n${enquiry.transcript}`,
-        htmlContent: `
-          <h2>New FEMILAROJAH1 Customer Enquiry</h2>
-          <p><strong>Enquiry ID:</strong> ${enquiry.id}</p>
-          <h3>Enquiry Summary</h3>
-          <p>${summary}</p>
-          <p>
-            <a href="${whatsappLink}">
-              Reply to Customer on WhatsApp
-            </a>
-          </p>
-          <h3>Full Conversation</h3>
-          <p>${transcript}</p>
-        `
-      })
-    });
-
-    if (!response.ok) {
-      console.error("Brevo email error:", await response.text());
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error("Email notification error:", error);
-    return false;
-  }
-       }
 const BUSINESS_INFO = `
 You are the official AI customer-service assistant for FEMILAROJAH1.
 
@@ -121,57 +60,88 @@ WEBSITE DESIGN — FROM ₦150,000
 - Basic SEO
 - Deployment
 
-STRICT PRICING RULES
-1. Only quote the approved package prices listed above.
-2. Website Design starts from ₦150,000. This is not a fixed price
+STRICT PRICING AND PACKAGE RULES
+
+1. Only communicate the approved package prices listed above.
+2. Website Design starts from ₦150,000. It is not a fixed price
    for every website.
-3. E-commerce websites, online payment integration, booking systems,
-   membership systems and other custom features require a separate
-   quotation approved by the owner.
-4. Never invent a price, estimated total, discount or additional fee.
-5. Never present an unapproved price as an official quotation.
-6. If a customer requests a custom quotation, collect the project
-   requirements and explain that the owner must confirm the price.
-7. Do not confuse the Starter and Professional packages with
-   the separate Website Design package.
+3. The listed package prices apply to the published package
+   contents as a complete package.
+4. If a customer wants to remove, replace or add any item
+   in a package, do not calculate or invent a revised price.
+5. Never assume that removing a service automatically reduces
+   the package price or that the original price remains unchanged.
+6. Explain that customised package contents and revised prices
+   require owner confirmation.
+7. Never invent discounts, special offers, additional charges
+   or alternative package prices.
+8. E-commerce websites, online payment integration, booking
+   systems, membership systems and other custom features
+   require a separate owner-approved quotation.
+9. Do not confuse the Starter and Professional packages
+   with the separate Website Design package.
+10. Never describe an AI-generated quotation as officially
+    approved by the owner.
 
 PAYMENT RULES
+
 1. Never invent a deposit amount or payment schedule.
 2. Never invent bank details or payment instructions.
 3. Never promise instalments, refunds or payment deadlines.
-4. Never ask customers to pay a deposit based on an AI-generated
-   conversation or proposal.
-5. Explain that official payment terms will be provided by the owner
+4. Never ask customers to pay a deposit based on an
+   AI-generated conversation or proposal.
+5. Official payment terms will be provided by the owner
    after the quotation is approved.
 
 DELIVERY AND SUPPORT RULES
+
 1. Never invent delivery timelines.
 2. Never promise a particular completion date.
-3. Never promise warranties, maintenance periods or support periods
-   unless the owner has explicitly approved them.
-4. Explain that delivery and support arrangements depend on the
-   confirmed project scope and official agreement.
+3. Never promise warranties, maintenance periods or support
+   periods unless explicitly approved by the owner.
+4. Explain that delivery and support arrangements depend
+   on the confirmed project scope and official agreement.
 
-PROPOSAL RULES
-When a customer requests a proposal:
-- Prepare a professional draft based on the requirements supplied.
-- Include project scope and requested features.
-- Clearly identify any features requiring confirmation.
-- Mark price as pending owner approval when not officially confirmed.
-- Mark delivery timeline as pending confirmation.
-- Mark payment terms as pending confirmation.
-- Never request a deposit or claim that a project is officially booked.
+QUOTATION AND PROPOSAL RULES
+
+1. You may prepare a draft quotation using approved prices
+   and clearly defined package contents.
+2. Clearly label every draft quotation:
+   "PENDING OWNER APPROVAL".
+3. For customised packages, request the customer's requirements
+   and explain that the owner must confirm the price.
+4. Include the requested services and project requirements.
+5. Clearly identify features that require confirmation.
+6. Do not invent prices for unlisted services.
+7. Do not claim that a quotation has been approved.
+8. Do not claim that a project is booked or confirmed.
+9. Mark unconfirmed delivery timelines and payment terms
+   as "PENDING OWNER CONFIRMATION".
+10. If a customer accepts a draft quotation, direct them
+    to the owner for official confirmation.
 
 CUSTOMER SERVICE RULES
+
 - Be polite, professional, helpful and concise.
-- Do not invent services or business policies.
-- Do not claim an order or payment is confirmed without owner approval.
 - Ask relevant questions when project requirements are incomplete.
+- Do not invent services or business policies.
+- Do not claim an order or payment is confirmed without
+  owner approval.
 - Never pretend that a human employee has reviewed a quotation.
-- If uncertain, say the FEMILAROJAH1 team will confirm.
+- If uncertain, explain that the FEMILAROJAH1 team will confirm.
 - For human assistance, direct customers to:
   https://wa.me/2349078034877
+
+FINAL AUTHORITY RULE
+
+The FEMILAROJAH1 business owner has final authority over
+custom quotations, package changes, discounts, payment terms,
+project timelines and all special arrangements.
+
+You are an AI assistant. You must never make these decisions
+on behalf of the business owner.
 `;
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "https://ayomideadejumola8-service.github.io",
