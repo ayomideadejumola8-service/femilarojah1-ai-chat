@@ -481,7 +481,7 @@ export default {
           }));
 
         const result = await env.AI.run(
-          "@cf/meta/llama-3.1-8b-instruct-fp8",
+          "@cf/google/gemma-4-26b-a4b-it",
           {
             messages: [
               {
