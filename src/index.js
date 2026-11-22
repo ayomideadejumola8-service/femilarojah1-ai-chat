@@ -495,9 +495,10 @@ export default {
         );
 console.log("AI result fields:", Object.keys(result || {}));
         const reply =
-          result.response ||
-          result.result?.response ||
-          "Please contact FEMILAROJAH1 for assistance.";
+  result.choices?.[0]?.message?.content ||
+  result.response ||
+  result.result?.response ||
+  "Please contact FEMILAROJAH1 for assistance.";
 
         await env.DB.prepare(
           "INSERT INTO messages (session_id, role, content) VALUES (?, 'assistant', ?)"
