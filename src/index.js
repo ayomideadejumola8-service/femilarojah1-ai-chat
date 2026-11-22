@@ -493,7 +493,7 @@ export default {
             max_tokens: 900
           }
         );
-console.log("AI result fields:", Object.keys(result || {}));
+
         const reply =
   result.choices?.[0]?.message?.content ||
   result.response ||
