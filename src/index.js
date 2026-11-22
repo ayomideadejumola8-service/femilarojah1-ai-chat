@@ -548,7 +548,7 @@ console.log("AI result fields:", Object.keys(result || {}));
         ).join("\n");
 
         const aiResult = await env.AI.run(
-          "@cf/meta/llama-3.1-8b-instruct-fp8",
+          "@cf/google/gemma-4-26b-a4b-it",
           {
             messages: [
               {
